@@ -15,6 +15,8 @@ import android.text.style.ForegroundColorSpan;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewAnimationUtils;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,14 +25,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.annotation.WorkerThread;
-import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 
+import com.google.android.gms.nearby.Nearby;
 import com.google.android.gms.nearby.connection.ConnectionInfo;
 import com.google.android.gms.nearby.connection.Payload;
 import com.google.android.gms.nearby.connection.Strategy;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
 /**
@@ -110,6 +113,10 @@ public class MainActivity extends ConnectionsActivity {
   /** A running log of debug messages. Only visible when DEBUG=true. */
   private TextView mDebugLogView;
 
+  private EditText inputText;
+  private Button submitInputTextButton;
+  private TextView receivedMessage;
+
   /** Listens to holding/releasing the volume rocker. */
   private final GestureDetector mGestureDetector =
       new GestureDetector(KeyEvent.KEYCODE_VOLUME_DOWN, KeyEvent.KEYCODE_VOLUME_UP) {
@@ -139,8 +146,6 @@ public class MainActivity extends ConnectionsActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
-    getSupportActionBar()
-        .setBackgroundDrawable(ContextCompat.getDrawable(this, R.drawable.actionBar));
 
     mPreviousStateView = (TextView) findViewById(R.id.previous_state);
     mCurrentStateView = (TextView) findViewById(R.id.current_state);
@@ -148,6 +153,18 @@ public class MainActivity extends ConnectionsActivity {
     mDebugLogView = (TextView) findViewById(R.id.debug_log);
     mDebugLogView.setVisibility(DEBUG ? View.VISIBLE : View.GONE);
     mDebugLogView.setMovementMethod(new ScrollingMovementMethod());
+
+    inputText = (EditText) findViewById(R.id.input_text);
+    submitInputTextButton = findViewById(R.id.send_button);
+    receivedMessage = findViewById(R.id.lastReceivedMessage);
+    submitInputTextButton.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        String input = inputText.getText().toString();
+        sendTextToAllConnectedEndpoints(input);
+        inputText.setText("");
+      }
+    });
 
     mName = generateRandomName();
 
@@ -466,6 +483,10 @@ public class MainActivity extends ConnectionsActivity {
           };
       mAudioPlayer = player;
       player.start();
+    } else if (payload.getType() == Payload.Type.BYTES) {
+      String text = new String(payload.asBytes(), StandardCharsets.UTF_8);
+      String formatted = getString(R.string.received_message, "\n" + text);
+      receivedMessage.setText(formatted);
     }
   }
 
@@ -601,6 +622,18 @@ public class MainActivity extends ConnectionsActivity {
     }
     return name;
   }
+
+  private void sendTextToAllConnectedEndpoints(String text) {
+    if (text == null || text.isEmpty()) return;
+
+    Payload payload = Payload.fromBytes(text.getBytes(StandardCharsets.UTF_8));
+    for (Endpoint endpoint : getConnectedEndpoints()) {
+      Nearby.getConnectionsClient(this).sendPayload(endpoint.getId(), payload)
+              .addOnSuccessListener(aVoid -> logD("Sent message to " + endpoint.getName()))
+              .addOnFailureListener(e -> logW("Failed to send message to " + endpoint.getName(), e));
+    }
+  }
+
 
   /**
    * Provides an implementation of Animator.AnimatorListener so that we only have to override the

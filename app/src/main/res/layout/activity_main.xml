@@ -3,6 +3,7 @@
     android:layout_height="match_parent"
     android:keepScreenOn="true">
 
+    <!-- Existing views -->
     <TextView
         android:id="@+id/previous_state"
         android:layout_width="match_parent"
@@ -21,7 +22,7 @@
         android:textSize="24sp"
         android:padding="10dp"
         android:textColor="@color/textColor"
-        android:background="@color/state_unknown"/>
+        android:background="@color/state_unknown" />
 
     <TextView
         android:id="@+id/name"
@@ -44,4 +45,48 @@
         android:textSize="20sp"
         android:textColor="@color/textColor" />
 
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_marginTop="40dp"
+        android:layout_gravity="top"
+        android:layout_height="wrap_content" >
+
+        <TextView
+            android:id="@+id/lastReceivedMessage"
+            android:layout_width="match_parent"
+            android:paddingVertical="10dp"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:textSize="25sp"
+            android:text="NO RECEIVED TEXT"
+            android:layout_height="wrap_content" />
+
+        <LinearLayout
+            android:id="@+id/input_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="10dp"
+            android:background="#DDDDDD">
+
+            <EditText
+                android:id="@+id/input_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Enter text"
+                android:inputType="text"
+                android:padding="8dp"
+                android:background="@android:drawable/edit_text" />
+
+            <Button
+                android:id="@+id/send_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Send"
+                android:padding="8dp" />
+        </LinearLayout>
+    </LinearLayout>
 </FrameLayout>
